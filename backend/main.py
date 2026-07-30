@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 import yfinance as yf
 
 app = FastAPI(title="StockSaathi API")
@@ -14,16 +14,19 @@ def get_stock(symbol: str):
     ticker = yf.Ticker(symbol + ".NS")
     data = ticker.history(period="2d")
 
+    if data.empty:
+        raise HTTPException(status_code=404, detail=f"Stock '{symbol}' not found")
+
     current_price = data["Close"].iloc[-1]
-    prev_close = data["Close"].iloc[-2]
+    prev_close = data["Close"].iloc[-2] if len(data) > 1 else current_price
     day_high = data["High"].iloc[-1]
     day_low = data["Low"].iloc[-1]
 
     change = current_price - prev_close
-    change_percent = (change / prev_close) * 100
+    change_percent = (change / prev_close) * 100 if prev_close != 0 else 0
 
     return {
-        "symbol": symbol,
+        "symbol": symbol.upper(),
         "price": round(current_price, 2),
         "previous_close": round(prev_close, 2),
         "day_high": round(day_high, 2),
