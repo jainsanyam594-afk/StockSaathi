@@ -34,3 +34,29 @@ def get_stock(symbol: str):
         "change": round(change, 2),
         "change_percent": round(change_percent, 2),
     }
+
+
+@app.get("/history/{symbol}")
+def get_history(symbol: str, period: str = "1mo"):
+    ticker = yf.Ticker(symbol + ".NS")
+    data = ticker.history(period=period)
+
+    if data.empty:
+        raise HTTPException(status_code=404, detail=f"Stock '{symbol}' not found")
+
+    history = []
+    for date, row in data.iterrows():
+        history.append({
+            "date": date.strftime("%Y-%m-%d"),
+            "open": round(row["Open"], 2),
+            "high": round(row["High"], 2),
+            "low": round(row["Low"], 2),
+            "close": round(row["Close"], 2),
+            "volume": int(row["Volume"]),
+        })
+
+    return {
+        "symbol": symbol.upper(),
+        "period": period,
+        "candles": history,
+    }
