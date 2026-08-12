@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import Chart from './Chart';
 
 function App() {
   const [stock, setStock] = useState(null);
@@ -59,7 +60,7 @@ function App() {
           border: '1px solid rgba(14,26,20,0.12)',
           borderRadius: '16px',
           padding: '1.5rem 2rem',
-          width: '320px',
+          width: '500px',
           boxShadow: '0 8px 30px -12px rgba(0,0,0,0.15)'
         }}>
           <h2 style={{ margin: '0 0 0.5rem', color: '#0E1A14' }}>{stock.symbol}</h2>
@@ -77,6 +78,9 @@ function App() {
           <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', color: '#5A6960' }}>
             <span>High: ₹{stock.day_high}</span>
             <span>Low: ₹{stock.day_low}</span>
+          </div>
+          <div style={{ marginTop: '1.5rem' }}>
+            <Chart symbol={symbol} />
           </div>
         </div>
       ) : (
