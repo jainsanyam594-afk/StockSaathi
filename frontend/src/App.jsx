@@ -6,19 +6,30 @@ function App() {
   const [stock, setStock] = useState(null);
   const [symbol, setSymbol] = useState('RELIANCE');
   const [period, setPeriod] = useState('1mo');
+  const [searchInput, setSearchInput] = useState('');
+  const [error, setError] = useState('');
 
   const stockList = ['RELIANCE', 'TCS', 'INFY', 'HDFCBANK', 'SBIN'];
 
   useEffect(() => {
     setStock(null);
+    setError('');
     axios.get(`http://127.0.0.1:8000/stock/${symbol}`)
       .then((response) => {
         setStock(response.data);
       })
-      .catch((error) => {
-        console.log('Error fetching stock:', error);
+      .catch((err) => {
+        console.log('Error fetching stock:', err);
+        setError(`Could not find "${symbol}". Try another symbol.`);
       });
   }, [symbol]);
+
+  const handleSearch = () => {
+    if (searchInput.trim() !== '') {
+      setSymbol(searchInput.trim().toUpperCase());
+      setSearchInput('');
+    }
+  };
 
   return (
     <div style={{
@@ -33,6 +44,40 @@ function App() {
       <h1 style={{ color: '#0F4230', fontSize: '2rem', marginBottom: '1.5rem' }}>
         StockSaathi
       </h1>
+
+      <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem' }}>
+        <input
+          type="text"
+          value={searchInput}
+          onChange={(e) => setSearchInput(e.target.value)}
+          onKeyDown={(e) => { if (e.key === 'Enter') handleSearch(); }}
+          placeholder="Search any stock (e.g. WIPRO)"
+          style={{
+            padding: '0.6rem 1rem',
+            borderRadius: '100px',
+            border: '1px solid rgba(14,26,20,0.12)',
+            background: '#FEFDF9',
+            fontSize: '0.9rem',
+            width: '260px',
+            outline: 'none'
+          }}
+        />
+        <button
+          onClick={handleSearch}
+          style={{
+            padding: '0.6rem 1.2rem',
+            borderRadius: '100px',
+            border: 'none',
+            background: '#1B6B4C',
+            color: '#fff',
+            fontWeight: '500',
+            cursor: 'pointer',
+            fontSize: '0.9rem'
+          }}
+        >
+          Search
+        </button>
+      </div>
 
       <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem', flexWrap: 'wrap', justifyContent: 'center' }}>
         {stockList.map((item) => (
@@ -81,7 +126,9 @@ function App() {
         ))}
       </div>
 
-      {stock ? (
+      {error ? (
+        <p style={{ color: '#c0392b' }}>{error}</p>
+      ) : stock ? (
         <div style={{
           background: '#FEFDF9',
           border: '1px solid rgba(14,26,20,0.12)',
