@@ -1,11 +1,10 @@
 import React, { useEffect, useRef } from 'react';
 import { createChart } from 'lightweight-charts';
 
-function Chart({ symbol }) {
+function Chart({ symbol, period }) {
   const chartContainerRef = useRef(null);
 
   useEffect(() => {
-    // Create the chart inside our container div
     const chart = createChart(chartContainerRef.current, {
       width: chartContainerRef.current.clientWidth,
       height: 300,
@@ -19,7 +18,6 @@ function Chart({ symbol }) {
       },
     });
 
-    // Add a candlestick series with our brand colors
     const candleSeries = chart.addCandlestickSeries({
       upColor: '#128a5e',
       downColor: '#c0392b',
@@ -29,11 +27,9 @@ function Chart({ symbol }) {
       wickDownColor: '#c0392b',
     });
 
-    // Fetch the historical data from our backend
-    fetch(`http://127.0.0.1:8000/history/${symbol}`)
+    fetch(`http://127.0.0.1:8000/history/${symbol}?period=${period}`)
       .then((res) => res.json())
       .then((data) => {
-        // Convert our candles into the format the chart needs
         const formatted = data.candles.map((c) => ({
           time: c.date,
           open: c.open,
@@ -46,9 +42,8 @@ function Chart({ symbol }) {
       })
       .catch((err) => console.log('Chart error:', err));
 
-    // Cleanup: remove the chart when symbol changes or component unmounts
     return () => chart.remove();
-  }, [symbol]);
+  }, [symbol, period]);
 
   return <div ref={chartContainerRef} style={{ width: '100%' }} />;
 }

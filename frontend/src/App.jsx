@@ -5,6 +5,7 @@ import Chart from './Chart';
 function App() {
   const [stock, setStock] = useState(null);
   const [symbol, setSymbol] = useState('RELIANCE');
+  const [period, setPeriod] = useState('1mo');
 
   const stockList = ['RELIANCE', 'TCS', 'INFY', 'HDFCBANK', 'SBIN'];
 
@@ -33,7 +34,7 @@ function App() {
         StockSaathi
       </h1>
 
-      <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem', flexWrap: 'wrap', justifyContent: 'center' }}>
+      <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem', flexWrap: 'wrap', justifyContent: 'center' }}>
         {stockList.map((item) => (
           <button
             key={item}
@@ -50,6 +51,32 @@ function App() {
             }}
           >
             {item}
+          </button>
+        ))}
+      </div>
+
+      <div style={{ display: 'flex', gap: '0.4rem', marginBottom: '1.5rem', justifyContent: 'center' }}>
+        {[
+          { label: '1W', value: '5d' },
+          { label: '1M', value: '1mo' },
+          { label: '6M', value: '6mo' },
+          { label: '1Y', value: '1y' },
+        ].map((range) => (
+          <button
+            key={range.value}
+            onClick={() => setPeriod(range.value)}
+            style={{
+              padding: '0.35rem 0.9rem',
+              borderRadius: '8px',
+              border: period === range.value ? '2px solid #1B6B4C' : '1px solid rgba(14,26,20,0.12)',
+              background: period === range.value ? '#1B6B4C' : '#FEFDF9',
+              color: period === range.value ? '#fff' : '#5A6960',
+              fontWeight: '500',
+              cursor: 'pointer',
+              fontSize: '0.8rem'
+            }}
+          >
+            {range.label}
           </button>
         ))}
       </div>
@@ -80,7 +107,7 @@ function App() {
             <span>Low: ₹{stock.day_low}</span>
           </div>
           <div style={{ marginTop: '1.5rem' }}>
-            <Chart symbol={symbol} />
+            <Chart symbol={symbol} period={period} />
           </div>
         </div>
       ) : (
