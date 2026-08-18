@@ -1,6 +1,8 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 import yfinance as yf
+import numpy as np
+from sklearn.linear_model import LinearRegression
 
 app = FastAPI(title="StockSaathi API")
 
@@ -16,7 +18,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
 
 
 @app.get("/")
@@ -74,4 +75,45 @@ def get_history(symbol: str, period: str = "1mo"):
         "symbol": symbol.upper(),
         "period": period,
         "candles": history,
+    }
+
+
+@app.get("/predict/{symbol}")
+def predict_stock(symbol: str):
+    ticker = yf.Ticker(symbol + ".NS")
+    data = ticker.history(period="3mo")
+
+    if data.empty:
+        raise HTTPException(status_code=404, detail=f"Stock '{symbol}' not found")
+
+    # Get the closing prices as a list
+    prices = data["Close"].values
+
+    # X = day numbers (0, 1, 2, ...), y = the price on that day
+    days = np.arange(len(prices)).reshape(-1, 1)
+    y = prices
+
+    # Train the linear regression model on the trend
+    model = LinearRegression()
+    model.fit(days, y)
+
+    # Predict the price for the next day
+    next_day = np.array([[len(prices)]])
+    predicted_price = model.predict(next_day)[0]
+
+    # How well does the trend line fit the data? (0 to 1, our "confidence")
+    confidence = model.score(days, y)
+
+    current_price = prices[-1]
+    change = predicted_price - current_price
+    change_percent = (change / current_price) * 100
+
+    return {
+        "symbol": symbol.upper(),
+        "current_price": round(float(current_price), 2),
+        "predicted_price": round(float(predicted_price), 2),
+        "change": round(float(change), 2),
+        "change_percent": round(float(change_percent), 2),
+        "confidence": round(float(confidence) * 100, 1),
+        "direction": "up" if change >= 0 else "down",
     }
