@@ -86,22 +86,17 @@ def predict_stock(symbol: str):
     if data.empty:
         raise HTTPException(status_code=404, detail=f"Stock '{symbol}' not found")
 
-    # Get the closing prices as a list
     prices = data["Close"].values
 
-    # X = day numbers (0, 1, 2, ...), y = the price on that day
     days = np.arange(len(prices)).reshape(-1, 1)
     y = prices
 
-    # Train the linear regression model on the trend
     model = LinearRegression()
     model.fit(days, y)
 
-    # Predict the price for the next day
     next_day = np.array([[len(prices)]])
     predicted_price = model.predict(next_day)[0]
 
-    # How well does the trend line fit the data? (0 to 1, our "confidence")
     confidence = model.score(days, y)
 
     current_price = prices[-1]
@@ -116,4 +111,47 @@ def predict_stock(symbol: str):
         "change_percent": round(float(change_percent), 2),
         "confidence": round(float(confidence) * 100, 1),
         "direction": "up" if change >= 0 else "down",
+    }
+
+
+@app.get("/plan")
+def generate_plan(income: str, risk: str, goal: str = "wealth", interest: str = "tech"):
+    income_map = {
+        "under_25k": 20000,
+        "25k_50k": 37500,
+        "50k_1L": 75000,
+        "above_1L": 125000,
+    }
+    monthly_income = income_map.get(income, 37500)
+
+    risk_profiles = {
+        "very_low": {"invest_pct": 0.10, "label": "Very Conservative",
+                     "alloc": {"Index funds": 55, "Mutual funds (SIP)": 30, "Large-cap stocks": 10, "Your interest sector": 5}},
+        "low": {"invest_pct": 0.15, "label": "Conservative",
+                "alloc": {"Index funds": 45, "Mutual funds (SIP)": 30, "Large-cap stocks": 15, "Your interest sector": 10}},
+        "medium": {"invest_pct": 0.20, "label": "Balanced",
+                   "alloc": {"Index funds": 35, "Mutual funds (SIP)": 30, "Large-cap stocks": 20, "Your interest sector": 15}},
+        "high": {"invest_pct": 0.25, "label": "Growth-focused",
+                 "alloc": {"Index funds": 25, "Mutual funds (SIP)": 25, "Large-cap stocks": 30, "Your interest sector": 20}},
+    }
+    profile = risk_profiles.get(risk, risk_profiles["low"])
+
+    invest_amount = round(monthly_income * profile["invest_pct"])
+
+    allocation = []
+    for name, percent in profile["alloc"].items():
+        allocation.append({
+            "name": name,
+            "percent": percent,
+            "amount": round(invest_amount * percent / 100),
+        })
+
+    return {
+        "monthly_income": monthly_income,
+        "risk_label": profile["label"],
+        "invest_amount": invest_amount,
+        "invest_percent": round(profile["invest_pct"] * 100),
+        "goal": goal,
+        "interest": interest,
+        "allocation": allocation,
     }
