@@ -146,6 +146,29 @@ def generate_plan(income: str, risk: str, goal: str = "wealth", interest: str = 
             "amount": round(invest_amount * percent / 100),
         })
 
+    # Sector diversification — how the money spreads across industries
+    interest_names = {
+        "tech": "Technology", "banking": "Banking & Finance", "energy": "Energy",
+        "healthcare": "Healthcare", "consumer": "Consumer Goods", "auto": "Automobile",
+    }
+    interest_label = interest_names.get(interest, "Technology")
+
+    base_sectors = {
+        "Banking & Finance": 25,
+        "Technology": 20,
+        "Energy": 15,
+        "Consumer Goods": 15,
+        "Healthcare": 15,
+        "Automobile": 10,
+    }
+    if interest_label in base_sectors:
+        base_sectors[interest_label] += 15
+    total = sum(base_sectors.values())
+    sectors = [
+        {"name": name, "percent": round(pct / total * 100)}
+        for name, pct in sorted(base_sectors.items(), key=lambda x: -x[1])
+    ]
+
     return {
         "monthly_income": monthly_income,
         "risk_label": profile["label"],
@@ -153,5 +176,7 @@ def generate_plan(income: str, risk: str, goal: str = "wealth", interest: str = 
         "invest_percent": round(profile["invest_pct"] * 100),
         "goal": goal,
         "interest": interest,
+        "interest_label": interest_label,
         "allocation": allocation,
+        "sectors": sectors,
     }
